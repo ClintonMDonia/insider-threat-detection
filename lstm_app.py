@@ -1,9 +1,9 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
-from tensorflow.keras.models import load_model
+from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
 
 st.title("Insider Threat Detection System")
 st.subheader("LSTM Deep Learning Model — UNIZIK Cybersecurity & Digital Forensics")
@@ -38,10 +38,10 @@ if uploaded_file:
                     seq = group[features].iloc[i:i+SEQUENCE_LENGTH].values
                     seq = seq.reshape(1, SEQUENCE_LENGTH, len(features))
                     prob = model.predict(seq, verbose=0)[0][0]
-                    label = "Suspicious" if prob > 0.5 else "Normal"
+                    label = "🔴 Suspicious" if prob > 0.5 else "🟢 Normal"
                     results.append({
                         "user": user,
-                        "date": group["date"].iloc[i+SEQUENCE_LENGTH] if "date" in group.columns else i+SEQUENCE_LENGTH,
+                        "date": group["date"].iloc[i+SEQUENCE_LENGTH] if "date" in group.columns else i,
                         "risk_score": round(float(prob), 4),
                         "status": label
                     })
@@ -51,15 +51,14 @@ if uploaded_file:
         st.markdown("### Detection Results")
         st.dataframe(results_df)
 
-        suspicious_count = (results_df["status"] == "Suspicious").sum()
-        normal_count = (results_df["status"] == "Normal").sum()
+        suspicious_count = (results_df["status"].str.contains("Suspicious")).sum()
+        normal_count = (results_df["status"].str.contains("Normal")).sum()
 
         st.markdown("### Summary")
         col1, col2 = st.columns(2)
         col1.metric("Suspicious Records", suspicious_count)
         col2.metric("Normal Records", normal_count)
 
-        import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
         ax.bar(["Normal", "Suspicious"], [normal_count, suspicious_count],
                color=["green", "red"])
